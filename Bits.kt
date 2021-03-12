@@ -370,7 +370,6 @@ class Bits() {
 
             if(index != bits.size -1 && valueString.length < 32) for(i in 0 until (32 - valueString.length)) paddingString += "0"
             output = paddingString + valueString +  output
-            println("padding: $paddingString value: $valueString output: $output")
         }
         return output
     }
