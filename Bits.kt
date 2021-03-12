@@ -2,19 +2,18 @@
 
 package utils
 
-import com.soywiz.kds.iterators.fastForEachReverse
 import kotlin.math.min
 
 @Suppress("MemberVisibilityCanBePrivate")
 class Bits() {
-    private var bits = mutableListOf<Long>(0)
+    private var bits = mutableListOf(0)
 
-    constructor(value: Long) : this() {
+    constructor(value: Int) : this() {
         bits[0] = value
     }
 
     private fun checkCapacity(length: Int) {
-        if (length >= bits.size) bits.add(0L)
+        if (length >= bits.size) bits.add(0)
     }
 
     /** @param index the index of the bit
@@ -22,8 +21,8 @@ class Bits() {
      * @throws Exception if index < 0
      */
     operator fun get(index: Int): Boolean {
-        val word = index ushr 6
-        return if (word >= bits.size) false else bits[word] and (1L shl (index and 0x3F)) != 0L
+        val word = index ushr 5
+        return if (word >= bits.size) false else bits[word] and (1 shl (index and 0x1F)) != 0
     }
 
     /** Returns the bit at the given index and clears it in one go.
@@ -32,10 +31,10 @@ class Bits() {
      * @throws Exception if index < 0
      */
     fun getAndClear(index: Int): Boolean {
-        val word = index ushr 6
+        val word = index ushr 5
         if (word >= bits.size) return false
         val oldBits = bits[word]
-        bits[word] = bits[word] and (1L shl (index and 0x3F)).inv()
+        bits[word] = bits[word] and (1 shl (index and 0x1F)).inv()
         return bits[word] != oldBits
     }
 
@@ -45,10 +44,10 @@ class Bits() {
      * @throws Exception if index < 0
      */
     fun getAndSet(index: Int): Boolean {
-        val word = index ushr 6
+        val word = index ushr 5
         checkCapacity(word)
         val oldBits = bits[word]
-        bits[word] = bits[word] or (1L shl (index and 0x3F))
+        bits[word] = bits[word] or (1 shl (index and 0x1F))
         return bits[word] == oldBits
     }
 
@@ -56,9 +55,9 @@ class Bits() {
      * @throws Exception if index < 0
      */
     fun set(index: Int) : Bits {
-        val word = index ushr 6
+        val word = index ushr 5
         checkCapacity(word)
-        bits[word] = bits[word] or (1L shl (index and 0x3F))
+        bits[word] = bits[word] or (1 shl (index and 0x1F))
 
         return this
     }
@@ -66,9 +65,9 @@ class Bits() {
     /** @param index the index of the bit to flip
      */
     fun flip(index: Int) : Bits {
-        val word = index ushr 6
+        val word = index ushr 5
         checkCapacity(word)
-        bits[word] = bits[word] xor (1L shl (index and 0x3F))
+        bits[word] = bits[word] xor (1 shl (index and 0x1F))
 
         return this
     }
@@ -77,23 +76,23 @@ class Bits() {
      * @throws Exception if index < 0
      */
     fun clear(index: Int) : Bits {
-        val word = index ushr 6
+        val word = index ushr 5
         if (word >= bits.size) return this
-        bits[word] = bits[word] and (1L shl (index and 0x3F)).inv()
+        bits[word] = bits[word] and (1 shl (index and 0x1F)).inv()
         return this
     }
 
     /** Clears the entire bitset  */
     fun clear() : Bits {
         bits.clear()
-        bits.add(0L)
+        bits.add(0)
         return this
     }
 
     /** @return the number of bits currently stored, **not** the highset set bit!
      */
     fun numBits(): Int {
-        return bits.size shl 6
+        return bits.size shl 5
     }
 
     /** Returns the "logical size" of this bitset: the index of the highest set bit in the bitset plus one. Returns zero if the
@@ -105,10 +104,10 @@ class Bits() {
         val bits = bits
         for (word in bits.indices.reversed()) {
             val bitsAtWord = bits[word]
-            if (bitsAtWord != 0L) {
+            if (bitsAtWord != 0) {
                 for (bit in 63 downTo 0) {
-                    if (bitsAtWord and (1L shl (bit and 0x3F)) != 0L) {
-                        return (word shl 6) + bit + 1
+                    if (bitsAtWord and (1 shl (bit and 0x1F)) != 0) {
+                        return (word shl 5) + bit + 1
                     }
                 }
             }
@@ -116,35 +115,31 @@ class Bits() {
         return 0
     }
 
-    /** @return true if this bitset contains at least one bit set to true
-     */
-    fun isNotEmpty(): Boolean {
-        return !isEmpty
-    }
-
     /** @return true if this bitset contains no bits that are set to true
      */
     val isEmpty: Boolean
         get() {
             bits.forEach {
-                if(it != 0L) return false
+                if(it != 0) return false
             }
 
             return true
         }
+    val isNotEmpty: Boolean
+        get() = !isEmpty
 
     /** Returns the index of the first bit that is set to true that occurs on or after the specified starting index. If no such bit
      * exists then -1 is returned.  */
     fun nextSetBit(fromIndex: Int): Int {
         val bits = bits
-        var word = fromIndex ushr 6
+        var word = fromIndex ushr 5
         val bitsLength = bits.size
         if (word >= bitsLength) return -1
         var bitsAtWord = bits[word]
-        if (bitsAtWord != 0L) {
-            for (i in (fromIndex and 0x3f)..63) {
-                if (bitsAtWord and (1L shl (i and 0x3F)) != 0L) {
-                    return (word shl 6) + i
+        if (bitsAtWord != 0) {
+            for (i in (fromIndex and 0x1F)..63) {
+                if (bitsAtWord and (1 shl (i and 0x1F)) != 0) {
+                    return (word shl 5) + i
                 }
             }
         }
@@ -152,10 +147,10 @@ class Bits() {
         while (word < bitsLength) {
             if (word != 0) {
                 bitsAtWord = bits[word]
-                if (bitsAtWord != 0L) {
+                if (bitsAtWord != 0) {
                     for (i in 0..63) {
-                        if (bitsAtWord and (1L shl (i and 0x3F)) != 0L) {
-                            return (word shl 6) + i
+                        if (bitsAtWord and (1 shl (i and 0x1F)) != 0) {
+                            return (word shl 5) + i
                         }
                     }
                 }
@@ -168,29 +163,29 @@ class Bits() {
     /** Returns the index of the first bit that is set to false that occurs on or after the specified starting index.  */
     fun nextClearBit(fromIndex: Int): Int {
         val bits = bits
-        var word = fromIndex ushr 6
+        var word = fromIndex ushr 5
         val bitsLength = bits.size
-        if (word >= bitsLength) return bits.size shl 6
+        if (word >= bitsLength) return bits.size shl 5
         var bitsAtWord = bits[word]
-        for (i in (fromIndex and 0x3f)..63) {
-            if (bitsAtWord and (1L shl (i and 0x3F)) == 0L) {
-                return (word shl 6) + i
+        for (i in (fromIndex and 0x1F)..63) {
+            if (bitsAtWord and (1 shl (i and 0x1F)) == 0) {
+                return (word shl 5) + i
             }
         }
         word++
         while (word < bitsLength) {
             if (word == 0) {
-                return word shl 6
+                return word shl 5
             }
             bitsAtWord = bits[word]
             for (i in 0..63) {
-                if (bitsAtWord and (1L shl (i and 0x3F)) == 0L) {
-                    return (word shl 6) + i
+                if (bitsAtWord and (1 shl (i and 0x1F)) == 0) {
+                    return (word shl 5) + i
                 }
             }
             word++
         }
-        return bits.size shl 6
+        return bits.size shl 5
     }
 
     /** Performs a logical **AND** of this target bit set with the argument bit set. This bit set is modified so that each bit in
@@ -209,7 +204,7 @@ class Bits() {
             var j = commonWords
             val s = bits.size
             while (s > j) {
-                bits[j] = 0L
+                bits[j] = 0
                 j++
             }
         }
@@ -285,7 +280,7 @@ class Bits() {
         val bits = bits
         val otherBits = other.bits
         for (i in min(bits.size, otherBits.size) - 1 downTo 0) {
-            if (bits[i] and otherBits[i] != 0L) {
+            if (bits[i] and otherBits[i] != 0) {
                 return true
             }
         }
@@ -304,7 +299,7 @@ class Bits() {
         val otherBitsLength = otherBits.size
         val bitsLength = bits.size
         for (i in bitsLength until otherBitsLength) {
-            if (otherBits[i] != 0L) {
+            if (otherBits[i] != 0) {
                 return false
             }
         }
@@ -328,11 +323,11 @@ class Bits() {
     }
 
     override fun hashCode(): Int {
-        val word = length() ushr 6
+        val word = length() ushr 5
         var hash = 0
         var i = 0
         while (word >= i) {
-            hash = 127 * hash + (bits[i] xor (bits[i] ushr 32)).toInt()
+            hash = 127 * hash + (bits[i] xor (bits[i] ushr 16))
             i++
         }
         return hash
@@ -370,11 +365,12 @@ class Bits() {
     override fun toString(): String {
         var output = ""
         bits.forEachIndexed { index, value ->
-            val valueString = value.toULong().toString(2)
+            val valueString = value.toUInt().toString(2)
             var paddingString = ""
 
-            if(index != bits.size -1 && valueString.length < 64) for(i in 0..(63 - valueString.length)) paddingString += "0"
+            if(index != bits.size -1 && valueString.length < 32) for(i in 0 until (32 - valueString.length)) paddingString += "0"
             output = paddingString + valueString +  output
+            println("padding: $paddingString value: $valueString output: $output")
         }
         return output
     }
@@ -383,15 +379,15 @@ class Bits() {
 
 fun Any.toBits() : Bits {
     return when (this) {
-        is Long -> Bits(this)
-        is Int -> Bits(this.toLong())
-        is Short -> Bits(this.toLong())
-        is Float -> Bits(this.toLong())
-        is Double -> Bits(this.toLong())
-        is Byte -> Bits(this.toLong())
-        is Boolean -> if(this) Bits(1L) else Bits(0L)
-        is Char -> Bits(this.toLong())
-        is String -> Bits(this.toLong())
+        is Long -> Bits(this.toInt())
+        is Int -> Bits(this)
+        is Short -> Bits(this.toInt())
+        is Float -> Bits(this.toInt())
+        is Double -> Bits(this.toInt())
+        is Byte -> Bits(this.toInt())
+        is Boolean -> if(this) Bits(1) else Bits(0)
+        is Char -> Bits(this.toInt())
+        is String -> Bits(this.toInt())
         else -> Bits()
     }
 }
