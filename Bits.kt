@@ -6,14 +6,16 @@ import kotlin.math.min
 
 @Suppress("MemberVisibilityCanBePrivate")
 class Bits() {
-    private var bits = mutableListOf(0)
+    private var bits = intArrayOf(0)
 
     constructor(value: Int) : this() {
         bits[0] = value
     }
 
     private fun checkCapacity(length: Int) {
-        if (length >= bits.size) bits.add(0)
+        if (length >= bits.size) {
+            bits = bits.copyOf(bits.size + 1)
+        }
     }
 
     /** @param index the index of the bit
@@ -84,8 +86,7 @@ class Bits() {
 
     /** Clears the entire bitset  */
     fun clear() : Bits {
-        bits.clear()
-        bits.add(0)
+        bits = intArrayOf(0)
         return this
     }
 
